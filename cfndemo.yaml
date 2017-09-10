@@ -120,6 +120,7 @@ Resources:
           IpProtocol: "-1"
   EC2WebServer:
     Type: "AWS::EC2::Instance"
+    DeletionPolicy: Delete
     Properties:
       ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", INSTANCEAMIID ]
       InstanceType: !FindInMap [ InstanceSize, !Ref EnvSize, EC2WebServer ]
