@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template will grow and grow untill it becomes perfect
+Resources:
+  VPCDemo:
+    Type: "AWS::EC2::VPC"
+    Properties: 
+      CidrBlock: "10.0.0.0/16"
+  IGW:
+    Type: "AWS::EC2::InternetGateway"
+  GatewayAttach:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId: !Ref IGW
+      VpcId: !Ref VPCDemo
+  RouteTablePublic:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPCDemo
+  RouteDefaultPublic:
+    Type: "AWS::EC2::Route"
+    DependsOn: GatewayAttach
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+      RouteTableId: !Ref RouteTablePublic
+  SubnetDemo:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: us-west-2a
+      CidrBlock: "10.0.0.0/24"
+      VpcId: !Ref VPCDemo
+      MapPublicIpOnLaunch: true
+  SubnetRouteTableAssociatePublicA:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      SubnetId: !Ref SubnetDemo
+  SGSsh:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Stack SSH Access Security Group
+      VpcId: !Ref VPCDemo
+      SecurityGroupIngress:
+        -
+          CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          ToPort: "22"
+          FromPort: "22"
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          ToPort: "-1"
+          IpProtocol: "-1"
+  SGPublicHttp:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Stack HTTP Access Security Group
+      VpcId: !Ref VPCDemo
+      SecurityGroupIngress:
+        -
+          CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          ToPort: "80"
+          FromPort: "80"
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          ToPort: "-1"
+          IpProtocol: "-1"
+  EC2WebServer:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: ami-de347abe
+      InstanceType: t2.micro
+      AvailabilityZone: us-west-2a
+      SecurityGroupIds: 
+        - !Ref SGSsh
+      SubnetId: !Ref SubnetDemo
+      KeyName: cfndemokey
