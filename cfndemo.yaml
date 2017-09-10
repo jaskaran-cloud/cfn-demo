@@ -15,6 +15,19 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
+Mappings:
+  RegionMap:
+    us-west-1:
+      "INSTANCEAMIID" : "ami-de347abe"
+    us-west-2:
+      "INSTANCEAMIID" : "ami-b04e92d0"
+  InstanceSize:
+    S:
+      "EC2WebServer" : "t2.micro"
+    M:
+      "EC2WebServer" : "t2.small"
+    L:
+      "EC2WebServer" : "t2.medium"
 Resources:
   VPCDemo:
     Type: "AWS::EC2::VPC"
@@ -41,7 +54,7 @@ Resources:
   SubnetDemo:
     Type: "AWS::EC2::Subnet"
     Properties:
-      AvailabilityZone: us-west-2a
+      AvailabilityZone: !Select [0, !GetAZs ]
       CidrBlock: "10.0.0.0/24"
       VpcId: !Ref VPCDemo
       MapPublicIpOnLaunch: true
@@ -53,7 +66,7 @@ Resources:
   SGSsh:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: Stack SSH Access Security Group
+      GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " SSH Security Group"]]
       VpcId: !Ref VPCDemo
       SecurityGroupIngress:
         -
@@ -69,7 +82,7 @@ Resources:
   SGPublicHttp:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: Stack HTTP Access Security Group
+      GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " HTTP Security Group"]]
       VpcId: !Ref VPCDemo
       SecurityGroupIngress:
         -
@@ -85,9 +98,9 @@ Resources:
   EC2WebServer:
     Type: "AWS::EC2::Instance"
     Properties:
-      ImageId: ami-de347abe
-      InstanceType: t2.micro
-      AvailabilityZone: us-west-2a
+      ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", INSTANCEAMIID ]
+      InstanceType: !FindInMap [ InstanceSize, !Ref EnvSize, EC2WebServer ]
+      AvailabilityZone: !Select [0, !GetAZs ]
       SecurityGroupIds: 
         - !Ref SGSsh
       SubnetId: !Ref SubnetDemo
