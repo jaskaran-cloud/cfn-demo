@@ -139,3 +139,10 @@ Resources:
             service httpd start
             cd /var/www/html
             curl -o index.html http://cfn-demo-bkt-jas.s3-website-us-west-2.amazonaws.com/
+Outputs:
+  Endpoint:
+    Description: Website Address
+    Value: !Join ["", ["http://", !GetAtt EC2WebServer.PublicIp]]
+  SSHAccess:
+    Description: SSH Access
+    Value: !Join ["", ["ssh -i ~/.ssh/", "cfndemokey.pem ", "ec2-user@", !GetAtt EC2WebServer.PublicIp]]
