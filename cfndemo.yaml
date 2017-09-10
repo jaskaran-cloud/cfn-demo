@@ -121,6 +121,10 @@ Resources:
   EC2WebServer:
     Type: "AWS::EC2::Instance"
     DeletionPolicy: Delete
+    CreationPolicy:
+      ResourceSignal:
+        Count: "1"
+        Timeout: PT10M
     Properties:
       ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", INSTANCEAMIID ]
       InstanceType: !FindInMap [ InstanceSize, !Ref EnvSize, EC2WebServer ]
@@ -139,7 +143,8 @@ Resources:
             chkconfig httpd on
             service httpd start
             cd /var/www/html
-            curl -o index.html http://cfn-demo-bkt-jas.s3-website-us-west-2.amazonaws.com/
+            curl -o index.html http://cfn-demo-bkt-jas.s3-website-us-west-2.amazonaws.com/            
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}
 Outputs:
   Endpoint:
     Description: Website Address
