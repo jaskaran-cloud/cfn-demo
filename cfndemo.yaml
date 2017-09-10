@@ -1,5 +1,20 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template will grow and grow untill it becomes perfect
+Parameters:
+  EnvSize:
+    Type: String
+    Default: S
+    AllowedValues:
+      - S
+      - M
+      - L
+    Description: Select Environment Size(S,M,L)
+  PublicAccess:
+    Type: String
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
 Resources:
   VPCDemo:
     Type: "AWS::EC2::VPC"
