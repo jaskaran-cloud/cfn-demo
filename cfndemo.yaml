@@ -28,6 +28,11 @@ Mappings:
       "EC2WebServer" : "t2.small"
     L:
       "EC2WebServer" : "t2.medium"
+Conditions:
+  isPublic:
+    !Equals [!Ref PublicAccess, "true"]
+  isntPublic:
+    !Not [!Equals [!Ref PublicAccess, "true"]]
 Resources:
   VPCDemo:
     Type: "AWS::EC2::VPC"
@@ -81,6 +86,24 @@ Resources:
           IpProtocol: "-1"
   SGPublicHttp:
     Type: "AWS::EC2::SecurityGroup"
+    Condition: isPublic
+    Properties:
+      GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " HTTP Security Group"]]
+      VpcId: !Ref VPCDemo
+      SecurityGroupIngress:
+        -
+          CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          ToPort: "80"
+          FromPort: "80"
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          ToPort: "-1"
+          IpProtocol: "-1"
+  SGClosedHttp:
+    Type: "AWS::EC2::SecurityGroup"
+    Condition: isntPublic
     Properties:
       GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " HTTP Security Group"]]
       VpcId: !Ref VPCDemo
@@ -103,5 +126,16 @@ Resources:
       AvailabilityZone: !Select [0, !GetAZs ]
       SecurityGroupIds: 
         - !Ref SGSsh
+        - !If [isPublic, !Ref SGPublicHttp, !Ref SGClosedHttp]
       SubnetId: !Ref SubnetDemo
       KeyName: cfndemokey
+      UserData:
+        "Fn::Base64":
+          !Sub |
+            #!/bin/bash
+            sudo yum install httpd -y
+            sudo yum update -y
+            chkconfig httpd on
+            service httpd start
+            cd /var/www/html
+            curl -o index.html http://cfn-demo-bkt-jas.s3-website-us-west-2.amazonaws.com/
